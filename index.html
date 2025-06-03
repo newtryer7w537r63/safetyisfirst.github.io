@@ -1,1 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stitick Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+    h2 {
+      margin-top: 0;
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    ul {
+      padding-left: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="login-container">
+    <h2>Welcome to Stitick</h2>
+    <input type="text" id="username" placeholder="Enter your username" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div class="container" id="list-container" style="display: none;">
+    <h2>Hello, <span id="userDisplay"></span> 👋</h2>
+    <ul id="userList">
+      <li>This is your list</li>
+      <li>You can customize this</li>
+    </ul>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script type="module">
+    // Firebase SDK imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBjPueGBfKgaTm4CayuCKrd6xn48ze81BQ",
+      authDomain: "antiibosstry.firebaseapp.com",
+      projectId: "antiibosstry",
+      storageBucket: "antiibosstry.firebasestorage.app",
+      messagingSenderId: "330324281115",
+      appId: "1:330324281115:web:260b21d579d3023e3c35be",
+      measurementId: "G-GGFVLBKG37"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const analytics = getAnalytics(app);
+
+    const loginContainer = document.getElementById("login-container");
+    const listContainer = document.getElementById("list-container");
+    const userDisplay = document.getElementById("userDisplay");
+
+    let currentUsername = "";
+
+    window.login = async function () {
+      const username = document.getElementById("username").value.trim();
+      if (!username) return;
+
+      const userRef = doc(db, "users", username);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        // New user, store in Firestore
+        await setDoc(userRef, {
+          username: username,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      currentUsername = username;
+      showList(username);
+    }
+
+    function showList(username) {
+      loginContainer.style.display = "none";
+      listContainer.style.display = "block";
+      userDisplay.textContent = username;
+    }
+
+    window.logout = function () {
+      currentUsername = "";
+      loginContainer.style.display = "block";
+      listContainer.style.display = "none";
+    }
+  </script>
+</body>
+</html>
 
