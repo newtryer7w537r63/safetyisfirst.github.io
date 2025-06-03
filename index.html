@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stitick Login</title>
+  <title>Stitick</title>
   <style>
     body {
       margin: 0;
@@ -34,7 +34,14 @@
       border-radius: 8px;
     }
     ul {
-      padding-left: 1rem;
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      background: #f7f7f7;
+      margin: 0.5rem 0;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
     }
   </style>
 </head>
@@ -47,17 +54,15 @@
 
   <div class="container" id="list-container" style="display: none;">
     <h2>Hello, <span id="userDisplay"></span> 👋</h2>
-    <ul id="userList">
-      <li>This is your list</li>
-      <li>You can customize this</li>
-    </ul>
+    <input type="text" id="itemInput" placeholder="Add a new item..." />
+    <button onclick="addItem()">Add to List</button>
+    <ul id="userList"></ul>
     <button onclick="logout()">Logout</button>
   </div>
 
   <script type="module">
-    // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
 
     const firebaseConfig = {
@@ -77,6 +82,8 @@
     const loginContainer = document.getElementById("login-container");
     const listContainer = document.getElementById("list-container");
     const userDisplay = document.getElementById("userDisplay");
+    const itemInput = document.getElementById("itemInput");
+    const userList = document.getElementById("userList");
 
     let currentUsername = "";
 
@@ -88,21 +95,55 @@
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        // New user, store in Firestore
         await setDoc(userRef, {
           username: username,
-          createdAt: new Date().toISOString()
+          items: []
         });
       }
 
       currentUsername = username;
       showList(username);
+      loadList(username);
     }
 
     function showList(username) {
       loginContainer.style.display = "none";
       listContainer.style.display = "block";
       userDisplay.textContent = username;
+    }
+
+    async function loadList(username) {
+      const userRef = doc(db, "users", username);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        const items = data.items || [];
+        userList.innerHTML = "";
+        items.forEach(item => {
+          const li = document.createElement("li");
+          li.textContent = item;
+          userList.appendChild(li);
+        });
+      }
+    }
+
+    window.addItem = async function () {
+      const itemText = itemInput.value.trim();
+      if (!itemText || !currentUsername) return;
+
+      const userRef = doc(db, "users", currentUsername);
+      const userSnap = await getDoc(userRef);
+      const data = userSnap.data();
+      const items = data.items || [];
+
+      items.push(itemText);
+
+      await updateDoc(userRef, {
+        items: items
+      });
+
+      itemInput.value = "";
+      loadList(currentUsername);
     }
 
     window.logout = function () {
@@ -113,4 +154,3 @@
   </script>
 </body>
 </html>
-
